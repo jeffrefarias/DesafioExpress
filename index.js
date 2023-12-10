@@ -33,11 +33,11 @@ async function leerRepertorio() {
   }
 
   // Llama a la función para leer el repertorio al iniciar la aplicación
-leerRepertorio();
+
   
 // Rutas y configuraciones de tu aplicación
-app.get('/canciones', (req, res) => {    
- 
+app.get('/canciones', async (req, res) => {    
+    await leerRepertorio();
     if (repertorio.length === 0) {
         res.status(404).send('No hay datos en Archivo datos.json'); // resp combinada status y send
     } else {
@@ -54,7 +54,7 @@ app.get('/canciones', (req, res) => {
   });
 
   // Ruta para agregar una nueva canción al JSON
-  app.post('/canciones', (req,res) =>{
+  app.post('/canciones', async (req,res) =>{
     try {
         const newSong = req.body;
         const data = JSON.parse(readFileSync(repertorioFilePath, 'utf8'));
@@ -63,6 +63,7 @@ app.get('/canciones', (req, res) => {
 
         // Guardar el repertorio actualizado en el archivo repertorio.json
         writeFileSync(repertorioFilePath, JSON.stringify(data, null, 2), 'utf-8');
+        await leerRepertorio();
 
         res.json({ mensaje: 'Canción agregada correctamente', cancion: newSong });
     } catch (error) {
@@ -90,7 +91,8 @@ app.get('/canciones', (req, res) => {
     
           // Guarda el repertorio actualizado en el archivo repertorio.json
           writeFileSync(repertorioFilePath, JSON.stringify(repertorio, null, 2), 'utf-8');
-    
+         
+
           res.json({ mensaje: 'Canción eliminada correctamente', id: songId });
         } else {
           res.status(404).json({ error: 'Canción no encontrada' });
@@ -101,3 +103,34 @@ app.get('/canciones', (req, res) => {
       }
 
   });
+
+  // Editar
+  app.put('/canciones/:id', async (req,res) =>{
+    try {
+        const songId = req.params.id;
+        const newSongData = req.body;
+        const data = await leerRepertorio();
+        // const data = readFileSync(repertorioFilePath, 'utf-8');
+        // repertorio = JSON.parse(data);
+        // Encuentra la posición de la canción en el array por su ID
+        const index = data.findIndex(song => song.id === songId);
+    
+        if (index !== -1) {
+
+          data[index] = { ...data[index], ...newSongData };
+    
+          // Guarda el repertorio actualizado en el archivo repertorio.json
+          writeFileSync(repertorioFilePath, JSON.stringify(data, null, 2), 'utf-8');
+          await leerRepertorio();
+
+          res.json({ mensaje: 'Canción editada correctamente', id: songId });
+        } else {
+          res.status(404).json({ error: 'Canción no encontrada' });
+        }
+      } catch (error) {
+        console.error('Error al editar la canción:', error.message);
+        res.status(500).json({ error: 'Error interno del servidor' });
+      }
+
+  });
+
