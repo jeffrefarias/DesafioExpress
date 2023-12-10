@@ -54,7 +54,6 @@ app.get('/canciones', (req, res) => {
   });
 
   // Ruta para agregar una nueva canción al JSON
-
   app.post('/canciones', (req,res) =>{
     try {
         const newSong = req.body;
@@ -70,4 +69,35 @@ app.get('/canciones', (req, res) => {
         console.error('Error al agregar nueva canción:', error.message);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
+  });
+
+
+  // Ruta para eliminar una canción del JSON
+
+  app.delete('/canciones/:id', (req,res) =>{
+    try {
+        const data = readFileSync(repertorioFilePath, 'utf-8');
+        repertorio = JSON.parse(data);
+    
+        const songId = req.params.id;
+    
+        // Encuentra la posición de la canción en el array por su ID
+        const index = repertorio.findIndex(song => song.id === parseInt(songId));
+    
+        if (index !== -1) {
+          // Si se encuentra la canción, elimínala del array
+          repertorio.splice(index, 1);
+    
+          // Guarda el repertorio actualizado en el archivo repertorio.json
+          writeFileSync(repertorioFilePath, JSON.stringify(repertorio, null, 2), 'utf-8');
+    
+          res.json({ mensaje: 'Canción eliminada correctamente', id: songId });
+        } else {
+          res.status(404).json({ error: 'Canción no encontrada' });
+        }
+      } catch (error) {
+        console.error('Error al eliminar la canción:', error.message);
+        res.status(500).json({ error: 'Error interno del servidor' });
+      }
+
   });
