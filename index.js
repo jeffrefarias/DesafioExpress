@@ -1,5 +1,4 @@
 import { readFileSync, writeFileSync } from 'fs';
-import path from 'path'
 import { URL } from 'url'; 
 import express from 'express'
 
@@ -21,7 +20,6 @@ const repertorioFilePath = ('repertorio.json');
 
 // Lee el contenido del archivo repertorio.json al iniciar la aplicación
 let repertorio = [];
-console.log(repertorio);
 
 async function leerRepertorio() {
     try {
@@ -58,6 +56,11 @@ app.get('/canciones', async (req, res) => {
     try {
         const newSong = req.body;
         const data = JSON.parse(readFileSync(repertorioFilePath, 'utf8'));
+
+        if (!req.body.titulo || !req.body.artista || !req.body.tono) {
+          return res.status(400).send('Todos los campos son obligatorios.');
+      }
+
         // Agregar la nueva canción al repertorio
         data.push(newSong);         
 
@@ -104,19 +107,22 @@ app.get('/canciones', async (req, res) => {
 
   });
 
-  // Editar
+  // Editar.
   app.put('/canciones/:id', async (req,res) =>{
     try {
         const songId = req.params.id;
         const newSongData = req.body;
-        const data = await leerRepertorio();
-        // const data = readFileSync(repertorioFilePath, 'utf-8');
-        // repertorio = JSON.parse(data);
+        const data = JSON.parse(readFileSync(repertorioFilePath, 'utf8'));
+
+
+        if (!req.body.titulo || !req.body.artista || !req.body.tono) {
+          return res.status(400).send('Todos los campos son obligatorios.');
+      }
         // Encuentra la posición de la canción en el array por su ID
-        const index = data.findIndex(song => song.id === songId);
+        const index = data.findIndex(song => song.id == parseInt(songId));
+       
     
         if (index !== -1) {
-
           data[index] = { ...data[index], ...newSongData };
     
           // Guarda el repertorio actualizado en el archivo repertorio.json
